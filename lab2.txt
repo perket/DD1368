@@ -1,0 +1,184 @@
+!!TABLES!!
+
+Contracts
+------------
+create table contracts (
+	id char(6) not null,
+	registered datetime,
+	signed datetime,
+	buyer_satisfied datetime,
+	buyer int not null,
+	seller int not null,
+	package int not null,
+	price int not null
+);
+
+
+Packages
+-------------
+create table packages (
+	id int not null auto_increment primary key,
+	width int not null,
+	height int not null,
+	length int not null,
+	weight int not null,
+	content_description varchar(999),
+	driver int,
+	fees int not null default 0,
+	taken_by_driver datetime,
+	picked_up datetime,
+	delivered datetime
+);
+
+
+User_details
+-------------
+create table user_details(
+	id int not null auto_increment primary key,
+	fname varchar(99) not null,
+	lname varchar(99) not null,
+	email varchar(99) unique not null,
+	password varchar(99) not null,
+	address varchar(99) not null,
+	zip_code varchar(99) not null,
+	city varchar(99) not null,
+	bank_routing_num varchar(99) not null,
+	bank_account_num varchar(99) not null
+);
+
+
+Driver_details
+-------------
+create table driver_details (
+	id int not null primary key,
+	price int not null default 0,
+	delivery_time int not null default 0
+);
+
+
+Buyer_details
+-------------
+create table buyer_details (
+	id int not null auto_increment primary key,
+	fname varchar(99) not null,
+	lname varchar(99) not null,
+	address varchar(99) not null,
+	zip_code varchar(99) not null,
+	city varchar(99) not null,
+	email varchar(99) unique not null
+);
+
+Transactions
+-------------
+create table transactions (
+	contract char(6) not null primary key,
+	amount int not null,
+	paid_by_buyer datetime,
+	settled datetime
+);
+
+!!PROCEDURES!!
+
+register_user
+-------------
+
+drop procedure if exists register_user;
+
+delimiter $$
+create procedure register_user(fn varchar(99),ln varchar(99),em varchar(99), pass varchar(99),adrs varchar(99),zip int,cty varchar(99),brn varchar(99),bam varchar(99),drvr boolean)
+begin
+
+insert into user_details (fname,lname,email,password,address,zip_code,city,bank_routing_num,bank_account_num) values (fn,ln,em,pass,adrs,zip,cty,brn,bam);
+if drvr is true then 
+	insert into driver_details (id) values ((select id from user_details where email = em));
+end if;
+ 
+end $$
+delimiter ;
+
+
+Register_contract
+-------------
+
+drop procedure if exists register_contract;
+
+delimiter $$
+create procedure register_contract(cId char(6), bId int, sId int, prc int, cont varchar(999), wi int, h int, l int, we int)
+begin
+declare pId int;
+	insert into packages (width,height,length,weight,content_description) values (wi,h,l,we,cont);
+	select id into pId from packages order by id desc limit 1;
+	insert into contracts (id,buyer,seller,package,price,registered) values (cId,bId,sId,pId,prc,now());
+end $$
+delimiter ;
+
+
+Update_driver
+-------------
+
+drop procedure if exists update_driver;
+
+delimiter $$
+create procedure update_driver(drvr int,volume float,order_id char(6))
+begin
+	declare shipping_fee float;
+	declare package_id int;
+	select volume*price into shipping_fee from driver_details where id = drvr;
+	select package into package_id from contracts where id = order_id;
+	update packages set driver = drvr, fees = shipping_fee where id = package_id;
+end $$
+delimiter ;
+
+
+Delete_contract
+---------------
+drop procedure if exists drop_contract;
+
+delimiter $$
+create procedure drop_contract(contractId char(6))
+begin
+	declare packageId int;
+	select package into packageId from contracts where id = contractId;
+	delete from contracts where id = contractId;
+	delete from packages where id = packageId;
+end $$
+delimiter ;
+
+
+Clear_db
+---------------
+
+drop procedure if exists clear_db;
+
+delimiter $$
+create procedure clear_db()
+begin
+	truncate table user_details;
+	truncate table buyer_details;
+	truncate table driver_details;
+	truncate table contracts;
+	truncate table packages;
+	truncate table transactions;
+end $$
+delimiter ;
+
+
+Take_package
+----------------
+
+drop procedure if exists take_package;
+
+delimiter $$
+create procedure take_package(pId int)
+begin
+	declare cPrice int;
+	declare pFees int;
+	declare cId char(6);
+	select id, price into cId, cPrice from contracts where package = pId;
+	select fees into pFees from packages where id = pId;
+	update packages set taken_by_driver = now() where id = pId;
+	insert into transactions (contract,amount) values (cId,cPrice+pFees);
+end $$
+delimiter ;
+
+select sum(steps_taken) from (select (c.registered is not null) + (c.signed is not null) + (c.buyer_satisfied is not null) + (p.taken_by_driver is not null) /*+ (p.picked_up is not null) + (p.delivered is not null)*/ as steps_taken from contracts c,packages p where c.package = p.id and c.id = 'ZIWyzK' union select (paid_by_buyer is not null) /*+ (paid_to_seller is not null)*/ as steps_takens from transactions where contract = 'ZIWyzK') as k;
