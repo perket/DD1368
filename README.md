@@ -1,4 +1,4 @@
-# dd1368
+# DD1368
 
 In this project I created a mockup company providing booth a delivery and a payment service. It was thought to be used as a compliment for services as Tradera or Blocket where	individuals trade goods with each other. When dealing with booth the delivery and the payment there would be total safety that no one got a product that they haven't paid for and no one shipped something that they wouldn't be paid for.
 
