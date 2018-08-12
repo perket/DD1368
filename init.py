@@ -47,6 +47,6 @@ class User():
 current_user = User()
 
 def sqlConnect():
-    return pymysql.connect(host='HOST',port='PORT',user='USER',passwd='PASSWORD',db='DATABASE')
+    return pymysql.connect(host='HOST',port=3306,user='USER',passwd='PASSWORD',db='DATABASE')
 
 
